@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Gráfico Transparente</title>
+
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+		<script type="text/javascript" src="js/1_d3.v3.min.js"></script>
+		<script type="text/javascript" src="js/2_d3.legend.js"></script>
+		<script type="text/javascript" src="js/CustomTooltip.js"></script>
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/gerador.js"></script>
+
+        <style type="text/css">
+            .axis path, .axis line {
+                fill: none;
+                stroke: #000;
+            }
+
+            .tooltip {
+			    position: absolute;
+			    -moz-border-radius: 5px;
+			    border-radius: 5px;
+			    border: 2px solid #000;
+			    background: #fff;
+			    opacity: .9;
+			    color: black;
+			    padding: 10px;
+			    width: 300px;
+			    font-size: 12px;
+			    z-index: 10;
+			}
+
+			.group_data {
+				float: left;
+				width: 100%;
+			}
+
+			.group_data li {
+				float: left;
+				width: 45%;
+				text-align: left;
+				margin: 1em;
+			}
+
+			.group_data li b {
+				width: 15%;
+				float: left;
+			}
+        </style>
+
+	</head>
+	<body>
+		<h2 style="text-align: center;">Gráfico da Transparência</h2>
+
+		<div id="chart" class="chart"></div>
+
+		<ul id="group_data" class="group_data">
+		</ul>
+
+		<script type="text/javascript">
+			var margin = { top: 50, right: 0, bottom: 200, left: 100 };
+			var width = 960 - margin.left - margin.right;
+			var height = 1100 - margin.top - margin.bottom;
+			var tip = CustomTooltip("transp_tooltip", 240);
+
+			var color = d3.scale.category20();
+
+			var x = d3.scale.ordinal()
+                .rangeRoundBands([0, width], .1);
+
+            var y = d3.scale.linear()
+                .range([height, 0]);
+
+            var xAxis = d3.svg.axis()
+                .scale(x)
+                .orient("bottom");
+
+            var yAxis = d3.svg.axis()
+                .scale(y)
+                .orient("left")
+                .ticks(10)
+                .tickFormat(function (d) {
+			        // var prefix = d3.formatPrefix(d);
+			        // return prefix.scale(d) + prefix.symbol;
+			        return "R$ " + d;
+			    });
+
+            var svg = d3.select(".chart")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+			var org_data = [];
+
+			d3.xml("Empenhos.xml", "application/xml", function(error, xml){
+				if (error) throw error;
+
+				var nodes = xml.documentElement.getElementsByTagName("Principal");
+				for (var i = nodes.length - 1; i >= 0; i--) {
+					var catEconVal = nodes[i].getElementsByTagName("CategoriaEconomica")[0].childNodes[1].innerHTML;
+						catEconVal = catEconVal.split('.').join("");
+
+					var catEconTxt = nodes[i].getElementsByTagName("CategoriaEconomica")[0].childNodes[3].innerHTML;
+
+					var vlrPago = nodes[i].getElementsByTagName("ValorPago")[0].innerHTML;
+						vlrPago = vlrPago.split(" ")[1];
+						vlrPago = vlrPago.replace(",",".");
+						vlrPago = parseFloat(vlrPago);
+
+					if (org_data[catEconVal] == undefined) {
+						org_data[catEconVal] = { 
+							id: catEconVal, 
+							val: vlrPago, 
+							txt: catEconTxt,
+							count: 1,
+							nodes: [nodes[i]]
+						};
+					} else {
+						org_data[catEconVal].val += vlrPago;
+						org_data[catEconVal].count += 1;
+						org_data[catEconVal].nodes.push(nodes[i]);
+					}
+				}
+
+				data = [];
+				org_data.forEach(function(d, i){ 
+					data.push(d);
+				})
+
+				x.domain(data.map(function(d) { return d.txt; }));
+				y.domain([0, d3.max(data, function(d) { return d.val; })]);
+
+        		svg.append("g")
+					.attr("class", "y axis")
+					.call(yAxis);
+
+            	svg.append("text")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 6)
+					.attr("dy", ".71em")
+					.style("text-anchor", "end")
+					.text("Valor");
+
+	            svg.append("g")
+					.attr("class", "x axis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(xAxis)
+					.selectAll("text")  
+						.style("text-anchor", "end")
+						.style("font-size", ".8em")
+						.attr("dx", "-.8em")
+						.attr("dy", ".15em")
+						.attr("transform", "rotate(-65)" );;
+
+				svg.selectAll(".bar")
+                .data(data)
+                .enter()
+                    .append("rect")
+                        .attr("class", "bar")
+                        .attr("x", function(d) { return x(d.txt); })
+                        .attr("width", x.rangeBand())
+                        .attr("y", function(d) { return y(d.val); })
+                        .attr("title", function(d) { return d.txt; })
+                        .attr("title", function(d) { return d.txt; })
+                        .attr("height", function(d) { return height - y(d.val); })
+                        .style("fill", function(d){ return color(d.txt); })
+                        .style("cursor", "pointer")
+                        .on("mouseover", overRect)
+                        .on("mouseout", outRect)
+                        .on("click", mouseClick)
+                        .each(function(d) { this._data = d; }); // store the initial angles
+			})
+
+			var outRect = function(){
+				tip.hideTooltip();
+			}
+
+            var overRect = function(){
+                g = d3.select(this);
+                var text = "<span>" + g.attr("title") + "</span><br />";
+                	text += "<span> R$ " + roundToTwo(this._data.val) + "</span>";
+
+				tip.showTooltip(text, d3.event);
+            }
+
+            var mouseClick = function(){
+            	var data = [];
+            	this._data.nodes.forEach(function(d){
+            		var credor = d.getElementsByTagName("Credor")[0].innerHTML;
+					var valor = d.getElementsByTagName("ValorPago")[0].innerHTML;
+						valor = valor.split(" ")[1];
+						valor = valor.replace(",",".");
+						valor = parseFloat(valor);
+
+            		if (data[credor] == undefined){
+            			data[credor] = { txt: credor, val: valor, count: 1 };
+            		} else {
+            			data[credor].val += valor;
+            			data[credor].count += 1;
+            		}
+            	});
+
+            	var gd = d3.select(".group_data");
+
+            	gd.selectAll("li")
+            		.remove();
+
+            	var new_data = [];
+            	for (var d in data){
+            		new_data.push(data[d]);
+            	}
+
+				gd.selectAll("li")
+					.data(new_data)
+					.enter()
+            			.append("li")
+            				.html(function(d){ 
+            					var txt = "<div>"; 
+            						txt += "<b>Credor (" + d.count + "): </b>" + d.txt + "<br />"; 
+            						txt += "<b>Itens: </b>" + d.count + "<br />"; 
+            						txt += "<b>Valor Pago: </b>R$ " + roundToTwo(d.val);
+            						txt += "</div>";
+            					return txt;
+            				});
+            }
+
+            var roundToTwo = function(num) {    
+			    return +(Math.round(num + "e+2")  + "e-2");
+			}
+		</script>
+	</body>
+</html>
