@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Gráfico Transparente</title>
+
+		<script type="text/javascript" src="js/1_d3.v3.min.js"></script>
+		<script type="text/javascript" src="js/2_d3.legend.js"></script>
+		<script type="text/javascript" src="js/CustomTooltip.js"></script>
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="js/gerador.js"></script>
+
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+        <style type="text/css">
+            .axis path, .axis line {
+                fill: none;
+                stroke: #000;
+            }
+
+            .tooltip {
+			    position: absolute;
+			    -moz-border-radius: 5px;
+			    border-radius: 5px;
+			    border: 2px solid #000;
+			    background: #fff;
+			    opacity: .9;
+			    color: black;
+			    padding: 10px;
+			    width: 300px;
+			    font-size: 12px;
+			    z-index: 10;
+			}
+
+			.chart, .detalhes, .new_chart, .container {
+				text-align: center;
+			}
+        </style>
+
+	</head>
+	<body>
+		<h2 style="text-align: center;"><b>Gráfico da Transparência</b></h2>
+		<h4 style="text-align: center;">Clique em alguma barra para mais detalhes...</h4>
+
+		<div id="chart" class="chart"></div>
+
+		<h3 id="detalhes" class="detalhes"></h3>
+		<div id="new_chart" class="new_chart"></div>
+
+		<!-- <h3>Lista</h3>
+		<ul id="group_data" class="group_data"></ul> -->
+
+		<hr />
+		<div class="container">
+			<address>
+				By <b>Augusto Weiand</b><br />
+				<a href="mailto:guto.weiand@gmail.com">guto.weiand@gmail.com</a>
+				<br />
+			</address>
+		</div>
+
+		<script type="text/javascript">
+			var org_data = [];
+			d3.xml("Empenhos.xml", "application/xml", function(error, xml){
+				if (error) throw error;
+
+				var nodes = xml.documentElement.getElementsByTagName("Principal");
+				for (var i = nodes.length - 1; i >= 0; i--) {
+					var catEconVal = nodes[i].getElementsByTagName("CategoriaEconomica")[0].childNodes[1].innerHTML;
+						catEconVal = catEconVal.split('.').join("");
+
+					var catEconTxt = nodes[i].getElementsByTagName("CategoriaEconomica")[0].childNodes[3].innerHTML;
+
+					var vlrPago = nodes[i].getElementsByTagName("ValorPago")[0].innerHTML;
+						vlrPago = vlrPago.split(" ")[1];
+						vlrPago = vlrPago.replace(",",".");
+						vlrPago = parseFloat(vlrPago);
+
+					if (org_data[catEconVal] == undefined) {
+						org_data[catEconVal] = { 
+							id: catEconVal, 
+							val: vlrPago, 
+							txt: catEconTxt,
+							count: 1,
+							nodes: [nodes[i]]
+						};
+					} else {
+						org_data[catEconVal].val += vlrPago;
+						org_data[catEconVal].count += 1;
+						org_data[catEconVal].nodes.push(nodes[i]);
+					}
+				}
+
+				data = [];
+				org_data.forEach(function(d, i){ 
+					data.push(d);
+				})
+
+				nd = new BarChart(data, ".chart", 0);
+				nd.init();
+            })
+		</script>
+
+	</body>
+</html>
