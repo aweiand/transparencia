@@ -4,20 +4,17 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<title>Gráfico Transparente</title>
 
-		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-
-		<!-- Latest compiled and minified JavaScript -->
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-
 		<script type="text/javascript" src="js/1_d3.v3.min.js"></script>
 		<script type="text/javascript" src="js/2_d3.legend.js"></script>
 		<script type="text/javascript" src="js/CustomTooltip.js"></script>
 		<script type="text/javascript" src="js/jquery.min.js"></script>
 		<script type="text/javascript" src="js/gerador.js"></script>
+
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
 
         <style type="text/css">
             .axis path, .axis line {
@@ -38,23 +35,6 @@
 			    font-size: 12px;
 			    z-index: 10;
 			}
-
-			.group_data {
-				float: left;
-				width: 100%;
-			}
-
-			.group_data li {
-				float: left;
-				width: 45%;
-				text-align: left;
-				margin: 1em;
-			}
-
-			.group_data li b {
-				width: 15%;
-				float: left;
-			}
         </style>
 
 	</head>
@@ -63,8 +43,7 @@
 
 		<div id="chart" class="chart"></div>
 
-		<ul id="group_data" class="group_data">
-		</ul>
+		<div id="new_chart" class="new_chart"></div>
 
 		<script type="text/javascript">
 			var margin = { top: 50, right: 0, bottom: 200, left: 100 };
@@ -211,28 +190,19 @@
             		}
             	});
 
-            	var gd = d3.select(".group_data");
-
-            	gd.selectAll("li")
-            		.remove();
-
             	var new_data = [];
             	for (var d in data){
             		new_data.push(data[d]);
             	}
 
-				gd.selectAll("li")
-					.data(new_data)
-					.enter()
-            			.append("li")
-            				.html(function(d){ 
-            					var txt = "<div>"; 
-            						txt += "<b>Credor (" + d.count + "): </b>" + d.txt + "<br />"; 
-            						txt += "<b>Itens: </b>" + d.count + "<br />"; 
-            						txt += "<b>Valor Pago: </b>R$ " + roundToTwo(d.val);
-            						txt += "</div>";
-            					return txt;
-            				});
+            	var gd = d3.select(".new_chart");
+
+            	gd.selectAll("svg")
+            		.remove();            	
+
+            	nd = new BarChart(new_data, ".new_chart");
+            	// nd.mouseClick = function(){ alert(this) };
+            	nd.init();
             }
 
             var roundToTwo = function(num) {    
