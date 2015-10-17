@@ -35,53 +35,36 @@
 			    font-size: 12px;
 			    z-index: 10;
 			}
+
+			.chart, .detalhes, .new_chart, .container {
+				text-align: center;
+			}
         </style>
 
 	</head>
 	<body>
-		<h2 style="text-align: center;">Gráfico da Transparência</h2>
+		<h2 style="text-align: center;"><b>Gráfico da Transparência</b></h2>
+		<h4 style="text-align: center;">Clique em alguma barra para mais detalhes...</h4>
 
 		<div id="chart" class="chart"></div>
 
+		<h3 id="detalhes" class="detalhes"></h3>
 		<div id="new_chart" class="new_chart"></div>
 
+		<!-- <h3>Lista</h3>
+		<ul id="group_data" class="group_data"></ul> -->
+
+		<hr />
+		<div class="container">
+			<address>
+				By <b>Augusto Weiand</b><br />
+				<a href="mailto:guto.weiand@gmail.com">guto.weiand@gmail.com</a>
+				<br />
+			</address>
+		</div>
+
 		<script type="text/javascript">
-			var margin = { top: 50, right: 0, bottom: 200, left: 100 };
-			var width = 960 - margin.left - margin.right;
-			var height = 1100 - margin.top - margin.bottom;
-			var tip = CustomTooltip("transp_tooltip", 240);
-
-			var color = d3.scale.category20();
-
-			var x = d3.scale.ordinal()
-                .rangeRoundBands([0, width], .1);
-
-            var y = d3.scale.linear()
-                .range([height, 0]);
-
-            var xAxis = d3.svg.axis()
-                .scale(x)
-                .orient("bottom");
-
-            var yAxis = d3.svg.axis()
-                .scale(y)
-                .orient("left")
-                .ticks(10)
-                .tickFormat(function (d) {
-			        // var prefix = d3.formatPrefix(d);
-			        // return prefix.scale(d) + prefix.symbol;
-			        return "R$ " + d;
-			    });
-
-            var svg = d3.select(".chart")
-                        .append("svg")
-                        .attr("width", width + margin.left + margin.right)
-                        .attr("height", height + margin.top + margin.bottom)
-                        .append("g")
-                            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 			var org_data = [];
-
 			d3.xml("Empenhos.xml", "application/xml", function(error, xml){
 				if (error) throw error;
 
@@ -117,97 +100,10 @@
 					data.push(d);
 				})
 
-				x.domain(data.map(function(d) { return d.txt; }));
-				y.domain([0, d3.max(data, function(d) { return d.val; })]);
-
-        		svg.append("g")
-					.attr("class", "y axis")
-					.call(yAxis);
-
-            	svg.append("text")
-					.attr("transform", "rotate(-90)")
-					.attr("y", 6)
-					.attr("dy", ".71em")
-					.style("text-anchor", "end")
-					.text("Valor");
-
-	            svg.append("g")
-					.attr("class", "x axis")
-					.attr("transform", "translate(0," + height + ")")
-					.call(xAxis)
-					.selectAll("text")  
-						.style("text-anchor", "end")
-						.style("font-size", ".8em")
-						.attr("dx", "-.8em")
-						.attr("dy", ".15em")
-						.attr("transform", "rotate(-65)" );;
-
-				svg.selectAll(".bar")
-                .data(data)
-                .enter()
-                    .append("rect")
-                        .attr("class", "bar")
-                        .attr("x", function(d) { return x(d.txt); })
-                        .attr("width", x.rangeBand())
-                        .attr("y", function(d) { return y(d.val); })
-                        .attr("title", function(d) { return d.txt; })
-                        .attr("title", function(d) { return d.txt; })
-                        .attr("height", function(d) { return height - y(d.val); })
-                        .style("fill", function(d){ return color(d.txt); })
-                        .style("cursor", "pointer")
-                        .on("mouseover", overRect)
-                        .on("mouseout", outRect)
-                        .on("click", mouseClick)
-                        .each(function(d) { this._data = d; }); // store the initial angles
-			})
-
-			var outRect = function(){
-				tip.hideTooltip();
-			}
-
-            var overRect = function(){
-                g = d3.select(this);
-                var text = "<span>" + g.attr("title") + "</span><br />";
-                	text += "<span> R$ " + roundToTwo(this._data.val) + "</span>";
-
-				tip.showTooltip(text, d3.event);
-            }
-
-            var mouseClick = function(){
-            	var data = [];
-            	this._data.nodes.forEach(function(d){
-            		var credor = d.getElementsByTagName("Credor")[0].innerHTML;
-					var valor = d.getElementsByTagName("ValorPago")[0].innerHTML;
-						valor = valor.split(" ")[1];
-						valor = valor.replace(",",".");
-						valor = parseFloat(valor);
-
-            		if (data[credor] == undefined){
-            			data[credor] = { txt: credor, val: valor, count: 1 };
-            		} else {
-            			data[credor].val += valor;
-            			data[credor].count += 1;
-            		}
-            	});
-
-            	var new_data = [];
-            	for (var d in data){
-            		new_data.push(data[d]);
-            	}
-
-            	var gd = d3.select(".new_chart");
-
-            	gd.selectAll("svg")
-            		.remove();            	
-
-            	nd = new BarChart(new_data, ".new_chart");
-            	// nd.mouseClick = function(){ alert(this) };
-            	nd.init();
-            }
-
-            var roundToTwo = function(num) {    
-			    return +(Math.round(num + "e+2")  + "e-2");
-			}
+				nd = new BarChart(data, ".chart", 0);
+				nd.init();
+            })
 		</script>
+
 	</body>
 </html>

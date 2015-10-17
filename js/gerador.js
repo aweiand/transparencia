@@ -1,4 +1,4 @@
-var BarChart = function(dados, destino){
+var BarChart = function(dados, destino, order){
 
 	var margin 	= { top: 50, right: 0, bottom: 200, left: 100 };
 	var width 	= 960 - margin.left - margin.right;
@@ -8,6 +8,7 @@ var BarChart = function(dados, destino){
 
 	var dados;
 	var destino;
+	var order;
 	var x, y;
 	var xAxis, yAxis;
 	var yAxisLabel = "Valor";
@@ -16,6 +17,7 @@ var BarChart = function(dados, destino){
 	this.init = function(){
 		this.dados = dados;
 		this.destino = destino;
+		this.order = order;
 
 		create_axis();
 		create_svg();
@@ -94,7 +96,7 @@ var BarChart = function(dados, destino){
                     .style("cursor", "pointer")
                     .on("mouseover", overRect)
                     .on("mouseout", outRect)
-                    .on("click", this.mouseClick)
+                    .on("click", mouseClick)
                     .each(function(d) { this._data = d; }); // store the initial angles
 	}
 
@@ -115,8 +117,72 @@ var BarChart = function(dados, destino){
 	    return +(Math.round(num + "e+2")  + "e-2");
 	}
 
-   	this.mouseClick = function(){
-		console.warn(this);    
+   	var mouseClick = function(){
+   		if (order == 0){
+			var new_data = convert_data_0(this._data.nodes);
+
+			d3.select(".detalhes").html("Detalhes de: <b>" + this._data.txt + "</b>");
+	    	var gd = d3.select(".new_chart");
+
+	    	gd.selectAll("svg")
+	    		.remove();            	
+
+	    	nv = new BarChart(new_data, ".new_chart", 1);
+	    	nv.init();
+    	} else {
+            alert("Desculpe, estas barras ainda não tem efeito ao clicar....");
+            
+            // TODO.....
+            // var new_data = convert_data_1(this._data.items);
+    		// var gd = d3.select(".group_data");
+      //       	gd.selectAll("li")
+      //       		.remove();
+
+
+			// gd.selectAll("li")
+			// 	.data(new_data)
+			// 	.enter()
+   //      			.append("li")
+   //      				.html(function(d){ 
+   //      					var txt = "<div>"; 
+   //      						txt += "<b>Item: </b>" + d.txt + "<br />"; 
+   //      						txt += "<b>Valor Pago: </b>R$ " + roundToTwo(d.val);
+   //      						txt += "</div>";
+   //      					return txt;
+   //      				});
+    	}
+    }
+
+    var convert_data_0 = function(dados){
+    	var data = [];
+    	dados.forEach(function(d){
+    		var credor = d.getElementsByTagName("Credor")[0].innerHTML;
+			var valor = d.getElementsByTagName("ValorPago")[0].innerHTML;
+				valor = valor.split(" ")[1];
+				valor = valor.replace(",",".");
+				valor = parseFloat(valor);
+
+			var items = d;
+
+    		if (data[credor] == undefined){
+    			data[credor] = { txt: credor, val: valor, count: 1, items: [items] };
+    		} else {
+    			data[credor].val += valor;
+    			data[credor].count += 1;
+    			data[credor].items.push(items);
+    		}
+    	});
+
+    	new_data = [];
+    	for (var d in data){
+    		new_data.push(data[d]);
+    	}
+
+    	return new_data;
+    }
+
+    var convert_data_1 = function(dados){
+    	// TODO.....
     }
 
 }
